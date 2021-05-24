@@ -16,4 +16,4 @@
 |서기|회의록, 사진, 자료 관리|임진선|-|-|
 
 
-**[프로젝트 진행 Notion ](https://www.notion.so/We-Go-ed512708c2f14177a53e4f5c95d918a9)**
+**[프로젝트 진행 Notion page 이동](https://www.notion.so/We-Go-ed512708c2f14177a53e4f5c95d918a9)**
