@@ -13,7 +13,7 @@
 |Depth Camera|깊이 카메라를 활용한 장애물 인식 알고리즘|안석현|-|-|
 |ROS|로봇 구동의 전반 담당|문재윤|양창원|안석현|
 |Test Setting|Test 환경 설계/제작, 카메라 마운팅 설계/제작|문재윤|임진선|-|
-|서기|회의록, 사진, 자료 관리|
+|서기|회의록, 사진, 자료 관리|임진선|-|-|
 
 
-### [프로젝트 진행 Notion](https://www.notion.so/We-Go-ed512708c2f14177a53e4f5c95d918a9)
+**[프로젝트 진행 Notion](https://www.notion.so/We-Go-ed512708c2f14177a53e4f5c95d918a9)**
