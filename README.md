@@ -10,7 +10,7 @@
 |---|---|---|
 |Tracking(Siam)|김강태|-|
 |Tracking(DeepSORT)|양창원|-|
-|depth camera|안석현|-|
+|depth camera|안석현||
 |ROS|문재윤|양창원|
 |H/W|문재윤|임진선|
 |Recording|임진선|-|
