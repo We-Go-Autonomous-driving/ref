@@ -52,7 +52,19 @@ def off():
         light.offMsg()
         rate.sleep()
 
+def emergency():
+    count = 0
+    while not rospy.is_shutdown():
+        light = Light_Control()
+        rate = rospy.Rate(60)
+        if str(count)[-1] in ['1', '6']: light.onMsg() # 1초 주기로 on
+        else: light.offMsg() # 나머지는 off
+        rate.sleep()
+        count+=1
+
+
 if __name__ == "__main__":
-    blink()
+    # blink()
     # off()
     # on()
+    emergency()
