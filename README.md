@@ -7,7 +7,7 @@
 ## 4. 목표: 실내 자율주행 모바일 로봇이 특정 인물을 Tracking 할 수 있는 기능 구현
 ## 5. 역할
 |역할|main|sub|
-|---|---|---|---|
+|---|---|---|
 |Tracking(Siam)|김강태|-|
 |Tracking(DeepSORT)|양창원|-|
 |depth camera|안석현|-|
