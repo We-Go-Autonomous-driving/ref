@@ -62,9 +62,8 @@ def emergency():
         rate.sleep()
         count+=1
 
-
 if __name__ == "__main__":
-    # blink()
+    blink()
     # off()
-    on()
+    # on()
     # emergency()
