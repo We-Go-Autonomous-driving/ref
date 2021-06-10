@@ -6,7 +6,7 @@ from geometry_msgs.msg import Twist
 import os
 
 # 조명 제어를 위한 import
-from scout_mini_ros.scout_bringup.light_control import *
+from ight_control import *
 from scout_msgs.msg import ScoutLightCmd
 
 # comment out below line to enable tensorflow logging outputs
