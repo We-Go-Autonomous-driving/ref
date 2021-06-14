@@ -23,22 +23,13 @@ from deep_sort import preprocessing, nn_matching
 from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
 from tools import generate_detections as gdet
-import pyrealsense2 as rs
-
-from utils2 import *
-from Default_dist import *
-
 flags.DEFINE_string('framework', 'tf', '(tf, tflite, trt')
-flags.DEFINE_string('weights', './checkpoints/yolov4-tiny-416',
+flags.DEFINE_string('weights', './checkpoints/yolov4-416',
                     'path to weights file')
 flags.DEFINE_integer('size', 416, 'resize images to')
-flags.DEFINE_boolean('tiny', True, 'yolo or yolo-tiny')
+flags.DEFINE_boolean('tiny', False, 'yolo or yolo-tiny')
 flags.DEFINE_string('model', 'yolov4', 'yolov3 or yolov4')
-#flags.DEFINE_string('video', './data/video/test.mp4', 'path to input video or set to 0 for webcam')
-flags.DEFINE_string('video', './data/0527_4_follow_1.mp4', 'path to input video')
-#flags.DEFINE_string('video', 0, 'path to input video')
-#flags.DEFINE_string('video', './data/0527_1_far_away.mp4', 'path to input video')
-#flags.DEFINE_string('video', './data/0527_3_left_right.mp4', 'path to input video')
+flags.DEFINE_string('video', './data/video/test.mp4', 'path to input video or set to 0 for webcam')
 flags.DEFINE_string('output', None, 'path to output video')
 flags.DEFINE_string('output_format', 'XVID', 'codec used in VideoWriter when saving video to file')
 flags.DEFINE_float('iou', 0.45, 'iou threshold')
@@ -83,55 +74,26 @@ def main(_argv):
         infer = saved_model_loaded.signatures['serving_default']
 
     # begin video capture
-    '''try:
+    try:
         vid = cv2.VideoCapture(int(video_path))
     except:
-        vid = cv2.VideoCapture(video_path)'''
-
-    pipeline = rs.pipeline()
-    config = rs.config()
-    config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-    config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
-
-    pipeline.start(config)
+        vid = cv2.VideoCapture(video_path)
 
     out = None
 
     # get video ready to save locally if flag is set
-    '''if FLAGS.output:
+    if FLAGS.output:
         # by default VideoCapture returns float instead of int
         width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = int(vid.get(cv2.CAP_PROP_FPS))
         codec = cv2.VideoWriter_fourcc(*FLAGS.output_format)
-        out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))'''
-    cx, cy = 0, 0
+        out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
+
     frame_num = 0
-
-
-    # Create an align object
-    # rs.align allows us to perform alignment of depth frames to others frames
-    # The "align_to" is the stream type to which we plan to align depth frames.
-    align_to = rs.stream.color
-    align = rs.align(align_to)
-
-    default = Default_dist()
-
     # while video is running
     while True:
-        frames = pipeline.wait_for_frames()
-        aligned_frames = align.process(frames)
-        depth_frame = aligned_frames.get_depth_frame()
-        frame = aligned_frames.get_color_frame()
-
-        #depth_frame = frames.get_depth_frame()
-        #frame = frames.get_color_frame()
-
-        depth_frame = np.asanyarray(depth_frame.get_data())
-        frame = np.asanyarray(frame.get_data())
-
-        #return_value, frame = vid.read()
-        return_value = True
+        return_value, frame = vid.read()
         if return_value:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image = Image.fromarray(frame)
@@ -139,14 +101,8 @@ def main(_argv):
             print('Video has ended or failed, try a different video format!')
             break
         frame_num +=1
-        
-
-        if frame_num < 11 :
-            default.default_update(depth_frame)
-            continue
-        
         print('Frame #: ', frame_num)
-        #frame_size = frame.shape[:2]
+        frame_size = frame.shape[:2]
         image_data = cv2.resize(frame, (input_size, input_size))
         image_data = image_data / 255.
         image_data = image_data[np.newaxis, ...].astype(np.float32)
@@ -197,17 +153,14 @@ def main(_argv):
         # store all predictions in one parameter for simplicity when calling functions
         pred_bbox = [bboxes, scores, classes, num_objects]
 
-        #fps = 1.0 / (time.time() - start_time)
-        #print("1-FPS: %.2f" % fps)
-
         # read in all class names from config
         class_names = utils.read_class_names(cfg.YOLO.CLASSES)
 
         # by default allow all classes in .names file
-        #allowed_classes = list(class_names.values())
+        allowed_classes = list(class_names.values())
         
         # custom allowed classes (uncomment line below to customize tracker for only people)
-        allowed_classes = ['person']
+        #allowed_classes = ['person']
 
         # loop through objects and use class index to get class name, allow only classes in allowed_classes list
         names = []
@@ -246,132 +199,33 @@ def main(_argv):
         # Call the tracker
         tracker.predict()
         tracker.update(detections)
-        
+
         # update tracks
         for track in tracker.tracks:
             if not track.is_confirmed() or track.time_since_update > 1:
                 continue 
-            print('track_id : ', track.track_id)
             bbox = track.to_tlbr()
             class_name = track.get_class()
-            #print('bbox : ', bbox)
-            w, h = int(bbox[2]-bbox[0]), int(bbox[3]-bbox[1])
-            cx, cy = int(w/2 + bbox[0]), int(h/2 + bbox[1])
-            #print('cx, cy : ', cx, cy)
             
-            # draw bbox on screen
+        # draw bbox on screen
             color = colors[int(track.track_id) % len(colors)]
             color = [i * 255 for i in color]
             cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), color, 2)
             cv2.rectangle(frame, (int(bbox[0]), int(bbox[1]-30)), (int(bbox[0])+(len(class_name)+len(str(track.track_id)))*17, int(bbox[1])), color, -1)
             cv2.putText(frame, class_name + "-" + str(track.track_id),(int(bbox[0]), int(bbox[1]-10)),0, 0.75, (255,255,255),2)
-            #cv2.circle(frame, (cx, cy), 10, (255, 0, 0))
 
         # if enable info flag then print details about each track
             if FLAGS.info:
                 print("Tracker ID: {}, Class: {},  BBox Coords (xmin, ymin, xmax, ymax): {}".format(str(track.track_id), class_name, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))))
-        
-        cv2.circle(frame, (320, 240), 10, (255, 255, 255))
-
-        #print('depth_frame.shape : ', depth_frame.shape)
-        #print('frame.shape : ', frame.shape)
-        #depth_frame.shape :  (480, 640)
-        #frame.shape :  (480, 640, 3)
-        # 480 : y, 640 : x
-        # 230:250 / 610:630
-
-        print('person distance : ', person_dist(depth_frame, cx, cy))
-        
-        # bbox center 20x20 roi
-        '''
-        box_center_roi = np.array((depth_frame[cy-10:cy+10, cx-10:cx+10]),dtype=np.float64)
-        cv2.rectangle(frame, (cx-10, cy+10), (cx+10, cy-10), (255, 255, 255), 2)
-        '''
-        #print(roi)
-        
-        #depth 확인용  depth_frame[y , x]
-        #depth_frame[220:240, 610:630] = 5000
-        #depth_frame[220:240, 10:30] = 5000
-        
-        #roi_side = np.array((depth_frame[370:390, 510:530]),dtype=np.float64)
-        #roi_side2 = np.array((depth_frame[10:30, 610:630]),dtype=np.float64)
-        #cv2.rectangle(frame, (530, 390), (510, 370), (255, 0, 0), 5)
-        #cv2.rectangle(frame, (30, 240), (10, 220), (255, 0, 0), 5)
-        #print(roi_side)
-
-        '''mean_dist = cv2.mean(box_center_roi)'''
-        #side_mean_dist = cv2.mean(roi_side)
-        #print('mean_dist : ', mean_dist[0])
-        #print('side_mean_dist : ', side_mean_dist[0])
-
-        
-        # tracking중 default angular
-        #x_dist = 320 - cx
-        #print('x_dist : ', x_dist)
-
-        obstacle_detect(default, depth_frame)
-        
-        # safe zone ROI
-        #(240, 420) (400, 420)
-        #(160, 480) (480, 480)
-        safe_roi = np.array([[400, 400], [240, 400], [160, 480], [480, 480]])
-        #safe_roi = np.array([[240, 420], [400, 420], [480, 160], [480, 480]])
-        cv2.polylines(frame, [safe_roi], True, (255, 255, 255), 2)
-        cv2.rectangle(frame, (205, 445), (195, 435), (255, 0, 0), 5)
-        cv2.rectangle(frame, (245, 405), (235, 395), (255, 0, 0), 5)
-        cv2.rectangle(frame, (405, 405), (395, 395), (255, 0, 0), 5)
-        cv2.rectangle(frame, (445, 445), (435, 435), (255, 0, 0), 5)
-
-        '''# obstacle detection roi 10x10
-        obs_roi1 = np.array((depth_frame[435:445, 195:205]),dtype=np.float64)
-        obs_roi2 = np.array((depth_frame[395:405, 235:245]),dtype=np.float64)
-        obs_roi3 = np.array((depth_frame[395:405, 395:405]),dtype=np.float64)
-        obs_roi4 = np.array((depth_frame[435:445, 435:445]),dtype=np.float64)
-
-        # mean1 = np.mean(obs_roi1)
-        # mean2 = np.mean(obs_roi2)
-        # mean3 = np.mean(obs_roi3)
-        # mean4 = np.mean(obs_roi4)
-
-        # print('111 mean1, mean2, mean3, mean4 : ', mean1, mean2, mean3, mean4)
-
-        obs_roi1 = np.where(obs_roi1<1, 1410, obs_roi1)
-        obs_roi2 = np.where(obs_roi2<1, 1910, obs_roi2)
-        obs_roi3 = np.where(obs_roi3<1, 1830, obs_roi3)
-        obs_roi4 = np.where(obs_roi4<1, 1380, obs_roi4)
-
-        mean1 = np.mean(obs_roi1)
-        mean2 = np.mean(obs_roi2)
-        mean3 = np.mean(obs_roi3)
-        mean4 = np.mean(obs_roi4)
-
-        #print('2222 mean1, mean2, mean3, mean4 : ', mean1, mean2, mean3, mean4)
-        
-        if mean2<1860 :
-            print('turn right')
-        elif mean1<1330 : 
-            print('turn right')
-
-        if mean3<1800 :
-            print('turn left')
-        elif mean4<1300 :
-            print('turn left')
-
-        '''
 
         # calculate frames per second of running detections
         fps = 1.0 / (time.time() - start_time)
-        #print("FPS: %.2f" % fps)
-        info = "time: %.2f ms" %(1000*(time.time() - start_time))
-        #print(info)
+        print("FPS: %.2f" % fps)
         result = np.asarray(frame)
         result = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         
-        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_frame, alpha=0.03), cv2.COLORMAP_JET)
-
         if not FLAGS.dont_show:
             cv2.imshow("Output Video", result)
-            #cv2.imshow("Output Video", depth_colormap)
         
         # if output flag is set, save video file
         if FLAGS.output:
