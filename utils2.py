@@ -41,31 +41,19 @@ def obstacle_detect(default, depth_frame, offset = 100):
 
     if mean1<roi1_min :
         print('turn right faster')
-        key1 = 'right'
+        key1 = 'right1'
+        return key1
     elif mean2<roi2_min : 
         print('turn right')
         key1 = 'right2'
+        return key1
 
     if mean4<roi4_min :
         print('turn left faster')
-        key2 = 'left'
+        key2 = 'left1'
+        return key2
     elif mean3<roi3_min :
         print('turn left')
         key2 = 'left2'
-
-    '''if mean2<roi2_min :
-        print('turn right 1')
-        key1 = 'right'
-    elif mean1<roi1_min : 
-        print('turn right 2')
-        key1 = 'right2'
-
-    if mean3<roi3_min :
-        print('turn left 1')
-        key2 = 'left'
-    elif mean4<roi4_min :
-        print('turn left 2')
-        key2 = 'left2'
-        '''
+        return key2
     
-    #print('222 len(key1), len(key2) : ', len(key1), len(key2))
