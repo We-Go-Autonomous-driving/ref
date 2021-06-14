@@ -277,7 +277,7 @@ def main(_argv):
             bbox = track.to_tlbr()
             
             # track id list 만들기
-            track_id_list.append(track.track_id)
+            track_id_list.append(track_id)
 
             if class_name == 'person': person_id_to_bbox[track_id] = bbox
             elif class_name == recognition_object: recognition_bbox_list.append(bbox)
@@ -299,7 +299,7 @@ def main(_argv):
                             target_id = person_id
             except:
                 print('except 실행')
-                track_id = False
+                target_id = False
 
         print('target_id: ',target_id)
     
