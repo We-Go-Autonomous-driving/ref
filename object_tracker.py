@@ -111,7 +111,7 @@ def main(_argv):
         out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))'''
     
     # 변수 추가
-    cx, cy = 0, 0
+    cx, cy, h = 0, 0, 0
     frame_num = 0
 
     # realsense align 맞추기 추가
@@ -200,11 +200,11 @@ def main(_argv):
 
         # format bounding boxes from normalized ymin, xmin, ymax, xmax ---> xmin, ymin, width, height
         original_h, original_w, _ = frame.shape
-        bboxes = utils.format_boxes(bboxes, original_h, original_w)
+        bboxes = utils.format_boxes(bboxes, original_h, original_w) 
 
         # store all predictions in one parameter for simplicity when calling functions
         pred_bbox = [bboxes, scores, classes, num_objects]
-
+        
         #fps = 1.0 / (time.time() - start_time)
         #print("1-FPS: %.2f" % fps)
 
@@ -240,6 +240,13 @@ def main(_argv):
         features = encoder(frame, bboxes)
         detections = [Detection(bbox, score, class_name, feature) for bbox, score, class_name, feature in zip(bboxes, scores, names, features)]
 
+        #print('detections[0].feature : ',detections[0].feature)
+        #Image.fromarray(detections[0].feature.astype(np.uint8)).show()
+        #gg = cv2.cvtColor(detections[0].feature, cv2.COLOR_RGB2BGR)
+        #cv2.imshow("feature", gg)
+        #print('(detections[0].feature.shape : ', detections[0].feature.shape)
+        #print('features.shape : ', features.shape)
+        #print('type : ', type(features))
         #initialize color map
         cmap = plt.get_cmap('tab20b')
         colors = [cmap(i)[:3] for i in np.linspace(0, 1, 20)]
@@ -253,7 +260,7 @@ def main(_argv):
 
         # Call the tracker
         tracker.predict()
-        tracker.update(detections)
+        tracker.update(detections, frame_num)
         
         # update tracks
         for track in tracker.tracks:
@@ -291,7 +298,7 @@ def main(_argv):
         # 230:250 / 610:630
 
         # 트레킹하는 person에서 가운데 거리 받아오기 추가
-        print('person distance : ', person_dist(depth_frame, cx, cy))
+        print('person distance : ', person_dist(depth_frame, cx, cy, h))
         
         # bbox center 20x20 roi
         '''
@@ -322,19 +329,20 @@ def main(_argv):
 
         # 장애물 회피용 ROI distance로 left, right string 받아오기 추가
         key = obstacle_detect(default, depth_frame)
+        #box_center_roi = np.array((depth_frame[cy-10-(h/5):cy+10-(h/5), cx-10:cx+10]),dtype=np.float64)
+        cv2.rectangle(frame, (cx+10, cy-(h//5)+10), (cx-10, cy-(h//5)-10), (255, 0, 0), 5)
         
-
         # 아래 애들은 다 필요 없음
         # safe zone ROI
         #(240, 420) (400, 420)
         #(160, 480) (480, 480)
-        #safe_roi = np.array([[400, 400], [240, 400], [160, 480], [480, 480]])
+        safe_roi = np.array([[400, 400], [240, 400], [160, 480], [480, 480]])
         #safe_roi = np.array([[240, 420], [400, 420], [480, 160], [480, 480]])
-        # cv2.polylines(frame, [safe_roi], True, (255, 255, 255), 2)
-        # cv2.rectangle(frame, (205, 445), (195, 435), (255, 0, 0), 5)
-        # cv2.rectangle(frame, (245, 405), (235, 395), (255, 0, 0), 5)
-        # cv2.rectangle(frame, (405, 405), (395, 395), (255, 0, 0), 5)
-        # cv2.rectangle(frame, (445, 445), (435, 435), (255, 0, 0), 5)
+        cv2.polylines(frame, [safe_roi], True, (255, 255, 255), 2)
+        cv2.rectangle(frame, (205, 445), (195, 435), (255, 0, 0), 5)
+        cv2.rectangle(frame, (245, 405), (235, 395), (255, 0, 0), 5)
+        cv2.rectangle(frame, (405, 405), (395, 395), (255, 0, 0), 5)
+        cv2.rectangle(frame, (445, 445), (435, 435), (255, 0, 0), 5)
 
 
         # calculate frames per second of running detections
@@ -344,7 +352,6 @@ def main(_argv):
         #print(info)
         result = np.asarray(frame)
         result = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        
         # depth map을 칼라로 보기위함 
         depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_frame, alpha=0.03), cv2.COLORMAP_JET)
 
@@ -355,7 +362,7 @@ def main(_argv):
         # if output flag is set, save video file
         #if FLAGS.output:
         #    out.write(result)
-        if cv2.waitKey(1) & 0xFF == ord('q'): break
+        if cv2.waitKey(400) & 0xFF == ord('q'): break
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':

@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
-def person_dist(depth_frame, cx, cy):
-    box_center_roi = np.array((depth_frame[cy-10:cy+10, cx-10:cx+10]),dtype=np.float64)
+def person_dist(depth_frame, cx, cy, h):
+    box_center_roi = np.array((depth_frame[cy-(h//5)-10:cy-(h//5)+10, cx-10:cx+10]),dtype=np.float64)
     mean_dist = cv2.mean(box_center_roi)
 
     return mean_dist[0]
@@ -26,7 +26,7 @@ def obstacle_detect(default, depth_frame, offset = 100):
     mean2 = np.mean(obs_roi2)
     mean3 = np.mean(obs_roi3)
     mean4 = np.mean(obs_roi4)
-    print('mean1, mean2, mean3, mean4 : ', mean1, mean2, mean3, mean4)
+    #print('mean1, mean2, mean3, mean4 : ', mean1, mean2, mean3, mean4)
     
     #print('111 len(key1), len(key2) : ', len(key1), len(key2))
     #roi1_min, roi2_min, roi3_min, roi4_min = 1860, 1330, 1800, 1300
