@@ -40,7 +40,7 @@ from deep_sort.tracker import Tracker
 from tools import generate_detections as gdet
 
 # 임포트 추가
-# import pyrealsense2 as rs
+import pyrealsense2 as rs
 from utils2 import *
 from Default_dist import *
 
@@ -139,6 +139,8 @@ def main(_argv):
     default = Default_dist()
 
     # while video is running
+    go = scout_pub_basic()
+    rate = rospy.Rate(60)
     while not rospy.is_shutdown():
          # realsense 파이프라인에서 프레임 받아오기 추가
         frames = pipeline.wait_for_frames()
@@ -278,13 +280,13 @@ def main(_argv):
         tracker.update(detections, frame_num)
         
         # <st-mini 제어를 위한 Publisher code>
-        go = scout_pub_basic()
-        rate = rospy.Rate(200)
+        
+        
         go.update(x,y,z,th,speed,turn)
         go.sendMsg()
 
         # try: # 추적할 대상이 있다면
-            # update tracks
+        # update tracks
         for track in tracker.tracks:
             if not track.is_confirmed() or track.time_since_update > 1:
                 continue 
@@ -300,6 +302,7 @@ def main(_argv):
             
             # 사람과 로봇의 거리 person_distance
             person_distance = person_dist(depth_frame, cx, cy, h)
+            print('person distance : ', person_dist(depth_frame, cx, cy, h))
 
             # 직진 안전 구간 최대/최소값
             stable_max_dist = 2500
@@ -307,8 +310,6 @@ def main(_argv):
             
             if person_distance < stable_min_dist:
                 key = 'stop'
-                x,y,z,th,speed,turn = key_move(key,x,y,z,th,speed,turn)
-                print('key: ', key)
             else:
                 """
                 depth값 활용
@@ -339,8 +340,8 @@ def main(_argv):
                 left_max = frame.shape[1]//4
                 right_max = (frame.shape[1]//4)*3
 
-                max_speed = 0.9
-                min_speed = 0.9
+                max_speed = 1
+                min_speed = 0.5
 
                 """
                 정지 조건(3/3): 장애물이 있을 때, 정확히는 정지가 아닌 회피 기동
@@ -350,10 +351,9 @@ def main(_argv):
                 # key = obstacle_detect(default, depth_frame)
                 cv2.rectangle(frame, (cx+10, cy-(h//5)+10), (cx-10, cy-(h//5)-10), (255, 0, 0), 5)
                 # 장애물이 없다면 사람 따라가기
-                # if not key:
-                key = drive(bbox, cx, left_limit, left_max, right_limit, right_max, turn, frame, stable_min_dist, person_distance, stable_max_dist,speed,max_speed,min_speed)
-                x,y,z,th,speed,turn = key_move(key,x,y,z,th,speed,turn)
-                print('key: ', key)
+                # if key == None:
+                key,speed,turn = drive(bbox, cx, left_limit, left_max, right_limit, right_max, turn, frame, stable_min_dist, person_distance, stable_max_dist,speed,max_speed,min_speed)
+               
             # draw bbox on screen
             color = colors[int(track.track_id) % len(colors)]
             color = [i * 255 for i in color]
@@ -362,20 +362,17 @@ def main(_argv):
             cv2.putText(frame, class_name + "-" + str(track.track_id),(int(bbox[0]), int(bbox[1]-10)),0, 0.75, (255,255,255),2)
             #cv2.circle(frame, (cx, cy), 10, (255, 0, 0))
             print('speed: {}, turn: {}'.format(speed,turn))
-        # if enable info flag then print details about each track
+            # if enable info flag then print details about each track
             if FLAGS.info:
                 print("Tracker ID: {}, Class: {},  BBox Coords (xmin, ymin, xmax, ymax): {}".format(str(track.track_id), class_name, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))))
     
         # 추적할 대상이 없다면 정지
         # except:
         #     key = 'stop'
-            # x,y,z,th,speed,turn = key_move(key,x,y,z,th,speed,turn)
-            # print('key: ', key)
-        cv2.circle(frame, (320, 240), 10, (255, 255, 255))
-
-        # x,y,z,th,speed,turn = key_move(key,x,y,z,th,speed,turn)
-        # print('key: ', key)
-        rate.sleep() 
+            x,y,z,th,speed,turn = key_move(key,x,y,z,th,speed,turn)
+            print('key: ', key)
+            cv2.circle(frame, (320, 240), 10, (255, 255, 255))
+            rate.sleep() 
 
         # 트레킹하는 person에서 가운데 거리 받아오기 추가
         # print('person distance : ', person_dist(depth_frame, cx, cy, h))
@@ -406,7 +403,7 @@ def main(_argv):
 
         # calculate frames per second of running detections
         fps = 1.0 / (time.time() - start_time)
-        #print("FPS: %.2f" % fps)
+        print("FPS: %.2f" % fps)
         info = "time: %.2f ms" %(1000*(time.time() - start_time))
         #print(info)
         result = np.asarray(frame)
@@ -421,7 +418,8 @@ def main(_argv):
         # if output flag is set, save video file
         #if FLAGS.output:
         #    out.write(result)
-        if cv2.waitKey(400) & 0xFF == ord('q'): break
+        if cv2.waitKey(1) & 0xFF == ord('q'): break
+    pipeline.stop()
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':
