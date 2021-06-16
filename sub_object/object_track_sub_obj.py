@@ -132,6 +132,10 @@ def main(_argv):
     # 타겟 아이디 초깃값(sub 객체가 있는 사람 id를 아래에서 할당 예정)
     target_id = False
     
+    # 좌/우 회전 한곗값 설정
+    left_limit = 220 # frame.shape[1]//2 - 100
+    right_limit = 420 # frame.shape[1]//2 + 100
+
     # while video is running
     while not rospy.is_shutdown():
         if use_webcam:
@@ -255,12 +259,7 @@ def main(_argv):
 
         # <st-mini 제어를 위한 Publisher code>
         go.update(x,y,z,th,speed,turn)
-        go.sendMsg()
-
-
-        # 좌/우 회전 한곗값 설정
-        left_limit = frame.shape[1]//2 - 100
-        right_limit = frame.shape[1]//2 + 100
+        go.sendMsg()       
 
         # # 좌/우 회전 속도 증가 구간 설정
         # left_max = frame.shape[1]//4
@@ -339,7 +338,7 @@ def main(_argv):
                 bbox = track.to_tlbr()
                 class_name = track.get_class()
 
-                if target_id == track_id:
+                if target_id == track_id and class_name == 'person':
                     # cx, cy 계산 추가
                     w, h = int(bbox[2]-bbox[0]), int(bbox[3]-bbox[1])
                     cx, cy = int(w/2 + bbox[0]), int(h/2 + bbox[1])
@@ -417,10 +416,15 @@ def main(_argv):
         
         # 화면 중심 표시
         cv2.circle(frame, (320, 240), 10, (255, 255, 255))
-
+        
+        print('frame shape: ',frame.shape)
+        print('left_limit: {}, right_limit: {}'.format(left_limit, right_limit))
         # 좌우 회전 구분선 그리기
         cv2.line(frame, (left_limit,0), (left_limit,frame.shape[0]), (255,0,0))
         cv2.line(frame, (right_limit,0), (right_limit,frame.shape[0]), (255,0,0))
+
+        cv2.line(frame, (left_limit,0), (left_limit,frame.shape[1]), (0,0,255))
+        cv2.line(frame, (right_limit,0), (right_limit,frame.shape[1]), (0,0,255))
 
         # ROS Rate sleep
         rate.sleep()
