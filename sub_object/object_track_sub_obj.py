@@ -132,9 +132,7 @@ def main(_argv):
     # 타겟 아이디 초깃값(sub 객체가 있는 사람 id를 아래에서 할당 예정)
     target_id = False
     
-    # 좌/우 회전 한곗값 설정
-    left_limit = 220 # frame.shape[1]//2 - 100
-    right_limit = 420 # frame.shape[1]//2 + 100
+    
 
     # while video is running
     while not rospy.is_shutdown():
@@ -261,6 +259,10 @@ def main(_argv):
         go.update(x,y,z,th,speed,turn)
         go.sendMsg()       
 
+        # 좌/우 회전 한곗값 설정
+        left_limit = frame.shape[1]//2 - 100
+        right_limit = frame.shape[1]//2 + 100
+
         # # 좌/우 회전 속도 증가 구간 설정
         # left_max = frame.shape[1]//4
         # right_max = (frame.shape[1]//4)*3
@@ -376,9 +378,6 @@ def main(_argv):
 
                         depth camera를 통해 장애물 유무를 먼저 판단하고 없다면 Target과의 거리/방향 측정 후 최종 발행값 결정.
                         """
-                        # 좌/우 회전 한곗값 설정
-                        left_limit = frame.shape[1]//2 - 50
-                        right_limit = frame.shape[1]//2 + 50
 
                         # 좌/우 회전 속도 증가 구간 설정
                         left_max = frame.shape[1]//4
@@ -417,14 +416,9 @@ def main(_argv):
         # 화면 중심 표시
         cv2.circle(frame, (320, 240), 10, (255, 255, 255))
         
-        print('frame shape: ',frame.shape)
-        print('left_limit: {}, right_limit: {}'.format(left_limit, right_limit))
         # 좌우 회전 구분선 그리기
         cv2.line(frame, (left_limit,0), (left_limit,frame.shape[0]), (255,0,0))
         cv2.line(frame, (right_limit,0), (right_limit,frame.shape[0]), (255,0,0))
-
-        cv2.line(frame, (left_limit,0), (left_limit,frame.shape[1]), (0,0,255))
-        cv2.line(frame, (right_limit,0), (right_limit,frame.shape[1]), (0,0,255))
 
         # ROS Rate sleep
         rate.sleep()
