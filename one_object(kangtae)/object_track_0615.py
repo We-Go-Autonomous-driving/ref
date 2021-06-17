@@ -296,7 +296,7 @@ def main(_argv):
 
                 # 직진 안전 구간 최대/최소값
                 stable_max_dist = 2500
-                stable_min_dist = 1000
+                stable_min_dist = 2000
                 
                 if person_distance < stable_min_dist: # 로봇과 사람의 거리가 직진 안전 구간 최솟값보다 작을 때 정지
                     print('Too Close')
