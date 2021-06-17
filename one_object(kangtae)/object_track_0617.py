@@ -6,7 +6,7 @@ import os
 from camera import *
 
 # 모터 제어 발행 코드 불러오기
-from scout_motor_pub import *
+from scout_motor_light_pub import *
 
 # key 변수로 모터 제어 함수 불러오기
 from key_move import *
@@ -335,9 +335,10 @@ def main(_argv):
                     if key == None:
                         print('key is NOT None')
                         # key,speed,turn = drive(cx, left_limit, right_limit, turn, speed)
-                        key,speed,turn = drive2(cx, left_limit, right_limit, turn, frame, speed, max_speed, max_turn)
+                        # key,speed,turn = drive2(cx, left_limit, right_limit, turn, frame, speed, max_speed, max_turn)
                         # key,speed,turn = drive3(cx, left_limit, right_limit, turn, frame, speed, max_speed, min_speed, max_turn, stable_min_dist, stable_max_dist, person_distance, start_speed_down=300)
-                    
+                        key,speed,turn = drive4(cx, left_limit, right_limit, turn, frame, speed, max_speed, min_speed, max_turn, stable_min_dist, stable_max_dist, person_distance, start_speed_down=300)
+                
                 # draw bbox on screen
                 color = colors[int(track.track_id) % len(colors)]
                 color = [i * 255 for i in color]
