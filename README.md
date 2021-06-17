@@ -57,4 +57,18 @@
 여기까지 하면 scout-mini를 제어할 수 있는 단계가 된다.  
 
 ## 3. yolov4-deepsort 설치
-추적 알고리즘인 deepsort 중에서 yolo
+추적 알고리즘인 deepsort 중에서 yolov4를 이용해 detection을 하는 소스코드를 clone해야 한다.  
+위치는 scout_mini_ros/scout_bringup 내부이다. 즉. 폴더 경로가 다음과 같다.  
+**~/catkin_ws/src/scout_mini_ros/scout_bringup/**  
+
+그럼 명령어는 아래와 같다.  
+`$ cd ~/catkin_ws/src/scout_mini_ros/scout_bringup`  
+`$ git clone https://github.com/theAIGuysCode/yolov4-deepsort.git`  
+
+clone이 끝난 후 yolov4-deepsort 파일을 `scout_bringup` 폴더 내부로 옮긴다.  
+그리고 새로운 python file이 생겼으니 마찬가지로 `$ sudo chmod +x ./*` 을 실행.  
+
+## 4. 수정 코드 clone
+작성된 code는 2가지 버전이 있으니 유의할 것.
+
+**차이점: **
