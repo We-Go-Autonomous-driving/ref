@@ -46,12 +46,12 @@ def obstacle_detect(default, depth_frame, offset = 100):
         return 'stop'
 
     if mean1<roi1_min :
-        return 'right'
+        return 'parallel_go_right'
     elif mean2<roi2_min : 
-        return 'right'
+        return 'parallel_go_right'
 
     if mean4<roi4_min :
-        return 'left'
+        return 'parallel_go_left'
     elif mean3<roi3_min :
-        return 'left'
+        return 'parallel_go_left'
     
