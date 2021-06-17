@@ -147,16 +147,18 @@ class Track:
         self.time_since_update = 0
         if self.state == TrackState.Tentative and self.hits >= self._n_init:
             self.state = TrackState.Confirmed
-        #print('self.track_id : ', self.track_id)
-        #print('self.state : ', self.state)
+        print('self.track_id : ', self.track_id)
+        print('self.state : ', self.state)
 
-    def mark_missed(self):
+    def mark_missed(self, lost_cont):
         """Mark this track as missed (no association at the current time step).
         """
         if self.state == TrackState.Tentative:
             self.state = TrackState.Deleted
-        elif self.time_since_update > self._max_age:
+        elif lost_cont > 100:
+            print('person ', self.track_id, 'is delete')
             self.state = TrackState.Deleted
+            return True
 
     def is_tentative(self):
         """Returns True if this track is tentative (unconfirmed).

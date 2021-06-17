@@ -37,7 +37,7 @@ class Tracker:
 
     """
 
-    def __init__(self, metric, max_iou_distance=0.7, max_age=60, n_init=3):
+    def __init__(self, metric, max_iou_distance=0.7, max_age=60, n_init=3, lost_cont=0):
         self.metric = metric
         self.max_iou_distance = max_iou_distance
         self.max_age = max_age
@@ -47,6 +47,9 @@ class Tracker:
         self.tracks = []
         self._next_id = 1
 
+        self.lost_cont = lost_cont
+        self.lost = False
+        
     def predict(self):
         """Propagate track state distributions one time step forward.
 
@@ -64,21 +67,31 @@ class Tracker:
             A list of detections at the current time step.
 
         """
+
         # Run matching cascade.
         matches, unmatched_tracks, unmatched_detections = \
             self._match(detections)
-
+        print('matches, unmatched_tracks, unmatched_detections : ', matches, unmatched_tracks, unmatched_detections)
+        print('detections : ', detections)
         #print('matches : ', matches)
         #print('unmatched_tracks : ', unmatched_tracks)
         # Update track set.
         for track_idx, detection_idx in matches:
             self.tracks[track_idx].update(
                 self.kf, detections[detection_idx])
+                
         for track_idx in unmatched_tracks:
-            self.tracks[track_idx].mark_missed()
+            self.lost_cont += 1
+            if self.tracks[track_idx].mark_missed(lost_cont = self.lost_cont) :
+                self.lost_cont = 0
+                self.lost = True
+                #print('unmatched_detections : ', unmatched_detections)
         for detection_idx in unmatched_detections:
-            if frame_num < 40 :
+            if frame_num < 30 :
                 self._initiate_track(detections[detection_idx], True)
+            elif self.lost :
+                self._initiate_track(detections[detection_idx], True)
+                self.lost = False
             #else :
             #    self._initiate_track(detections[detection_idx])
             #self._initiate_track(detections[detection_idx])
@@ -135,6 +148,7 @@ class Tracker:
         matches = matches_a + matches_b
         unmatched_tracks = list(set(unmatched_tracks_a + unmatched_tracks_b))
         
+        #print('matches, unmatched_tracks, unmatched_detections : ', matches, unmatched_tracks, unmatched_detections)
         return matches, unmatched_tracks, unmatched_detections
 
     def _initiate_track(self, detection, flag=False):
@@ -148,5 +162,6 @@ class Tracker:
         self.tracks.append(Track(
             mean, covariance, self._next_id, self.n_init, max_age,
             detection.feature, class_name))
+        print('self.tracks.track[0].track_id : ', self.tracks[0].track_id)
         self._next_id += 1
  

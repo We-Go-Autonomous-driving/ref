@@ -50,7 +50,7 @@ flags.DEFINE_boolean('count', False, 'count objects being tracked on screen')
 
 def main(_argv):
     # Definition of the parameters
-    max_cosine_distance = 0.4
+    max_cosine_distance = 0.25
     nn_budget = None
     nms_max_overlap = 1.0
     
@@ -344,7 +344,6 @@ def main(_argv):
         cv2.rectangle(frame, (405, 405), (395, 395), (255, 0, 0), 5)
         cv2.rectangle(frame, (445, 445), (435, 435), (255, 0, 0), 5)
 
-
         # calculate frames per second of running detections
         fps = 1.0 / (time.time() - start_time)
         #print("FPS: %.2f" % fps)
@@ -362,7 +361,7 @@ def main(_argv):
         # if output flag is set, save video file
         #if FLAGS.output:
         #    out.write(result)
-        if cv2.waitKey(400) & 0xFF == ord('q'): break
+        if cv2.waitKey(100) & 0xFF == ord('q'): break
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':
@@ -370,3 +369,4 @@ if __name__ == '__main__':
         app.run(main)
     except SystemExit:
         pass
+    
